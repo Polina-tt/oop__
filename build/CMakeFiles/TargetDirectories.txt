@@ -1,0 +1,4 @@
+/mnt/d/2 курс/ооп/lab4/build/CMakeFiles/campus_assets.dir
+/mnt/d/2 курс/ооп/lab4/build/CMakeFiles/experiment.dir
+/mnt/d/2 курс/ооп/lab4/build/CMakeFiles/edit_cache.dir
+/mnt/d/2 курс/ооп/lab4/build/CMakeFiles/rebuild_cache.dir
