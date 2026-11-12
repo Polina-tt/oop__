@@ -1,0 +1,14 @@
+[
+{
+  "directory": "/mnt/d/2 курс/ооп/lab1/build",
+  "command": "/usr/bin/c++  -I\"/mnt/d/2 курс/ооп/lab1/include\" -g -std=gnu++20 -o CMakeFiles/equipment_app.dir/src/main.cpp.o -c \"/mnt/d/2 курс/ооп/lab1/src/main.cpp\"",
+  "file": "/mnt/d/2 курс/ооп/lab1/src/main.cpp",
+  "output": "CMakeFiles/equipment_app.dir/src/main.cpp.o"
+},
+{
+  "directory": "/mnt/d/2 курс/ооп/lab1/build",
+  "command": "/usr/bin/c++  -I\"/mnt/d/2 курс/ооп/lab1/include\" -g -std=gnu++20 -o CMakeFiles/equipment_app.dir/src/equipment_item.cpp.o -c \"/mnt/d/2 курс/ооп/lab1/src/equipment_item.cpp\"",
+  "file": "/mnt/d/2 курс/ооп/lab1/src/equipment_item.cpp",
+  "output": "CMakeFiles/equipment_app.dir/src/equipment_item.cpp.o"
+}
+]
