@@ -1,0 +1,1 @@
+/usr/bin/c++ -Wl,--dependency-file=CMakeFiles/campus_assets.dir/link.d CMakeFiles/campus_assets.dir/src/main.cpp.o CMakeFiles/campus_assets.dir/src/equipment_record.cpp.o -o campus_assets
