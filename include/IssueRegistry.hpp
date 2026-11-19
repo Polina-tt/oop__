@@ -1,56 +1,124 @@
 #pragma once
 
-#include <vector>
 #include <algorithm>
-#include <stdexcept>
+#include <string>
+#include <utility>
+#include <vector>
+
 #include "EquipmentIssue.hpp"
+#include "IssuanceResult.hpp"
+#include "User.hpp"
+#include "equipment_record.hpp"
 
 class IssueRegistry {
 private:
-    std::vector<EquipmentIssue> issues_; // Композиція: реєстр володіє записами
+    std::vector<EquipmentIssue> issues_;
     int next_issue_id_ = 1;
 
 public:
     IssueRegistry() = default;
 
-    // Підрахунок активних видач для конкретного користувача
-    size_t getActiveCountForUser(int user_id) const {
-        return std::count_if(issues_.begin(), issues_.end(), [user_id](const EquipmentIssue& issue) {
-            return issue.isActive() && issue.getUser().getId() == user_id;
-        });
+    std::size_t getActiveCountForUser(int user_id) const {
+        return static_cast<std::size_t>(std::count_if(
+            issues_.begin(),
+            issues_.end(),
+            [user_id](const EquipmentIssue& issue) {
+                return issue.isActive() && issue.getUser().getId() == user_id;
+            }
+        ));
     }
 
-    // Видача обладнання з перевіркою всіх правил
-    void issueEquipment(const User& user, EquipmentItem& equipment) {
-        // 1. Перевірка: чи обладнання вже видане
-        auto it = std::find_if(issues_.begin(), issues_.end(), [&](const EquipmentIssue& issue) {
-            return issue.isActive() && issue.getEquipment().getId() == equipment.getId();
-        });
-        if (it != issues_.end()) {
-            throw std::runtime_error("Equipment is already issued.");
-        }
-
-        // 2. Перевірка: чи не перевищено ліміт користувача
-        if (getActiveCountForUser(user.getId()) >= user.getMaxActiveIssues()) {
-            throw std::runtime_error("User has reached the maximum active issues limit.");
-        }
-
-        // 3. Додавання нового запису
-        issues_.emplace_back(next_issue_id_++, user, equipment);
-    }
-
-    // Повернення обладнання
-    void returnEquipment(int equipment_id) {
-        auto it = std::find_if(issues_.begin(), issues_.end(), [&](EquipmentIssue& issue) {
-            return issue.isActive() && issue.getEquipment().getId() == equipment_id;
-        });
+    const EquipmentIssue* findIssueById(int issue_id) const {
+        auto it = std::find_if(
+            issues_.begin(),
+            issues_.end(),
+            [issue_id](const EquipmentIssue& issue) {
+                return issue.getId() == issue_id;
+            }
+        );
         if (it == issues_.end()) {
-            throw std::runtime_error("No active issue found for this equipment.");
+            return nullptr;
         }
-        it->close();
+        return &(*it);
     }
 
-    // Отримання всіх записів (для перевірки та тестів)
+    IssueResult issueEquipment(
+        const User& user,
+        Equipment& equipment,
+        int requested_days = 1,
+        int max_allowed_days = 14
+    ) {
+        if (requested_days <= 0) {
+            return IssueResult::failure(
+                IssueError::InvalidPeriod,
+                "Requested loan period must be positive."
+            );
+        }
+        if (requested_days > max_allowed_days) {
+            return IssueResult::failure(
+                IssueError::DurationExceedsLimit,
+                "Requested loan duration exceeds allowed limit."
+            );
+        }
+        if (!equipment.isAvailable()) {
+            return IssueResult::failure(
+                IssueError::EquipmentUnavailable,
+                "Equipment is currently unavailable."
+            );
+        }
+
+        auto active_it = std::find_if(
+            issues_.begin(),
+            issues_.end(),
+            [&equipment](const EquipmentIssue& issue) {
+                return issue.isActive() && issue.getEquipment().getId() == equipment.getId();
+            }
+        );
+        if (active_it != issues_.end()) {
+            return IssueResult::failure(
+                IssueError::EquipmentUnavailable,
+                "Equipment already has an active issue."
+            );
+        }
+
+        if (getActiveCountForUser(user.getId()) >= user.getMaxActiveIssues()) {
+            return IssueResult::failure(
+                IssueError::LoanLimitExceeded,
+                "User has reached the maximum active issues limit."
+            );
+        }
+
+        const int assigned_id = next_issue_id_++;
+        equipment.setAvailable(false);
+        issues_.emplace_back(assigned_id, user, equipment);
+        return IssueResult::success(assigned_id, "Equipment issued successfully.");
+    }
+
+    IssueResult returnEquipment(int equipment_id) {
+        auto any_it = std::find_if(
+            issues_.begin(),
+            issues_.end(),
+            [equipment_id](const EquipmentIssue& issue) {
+                return issue.getEquipment().getId() == equipment_id;
+            }
+        );
+        if (any_it == issues_.end()) {
+            return IssueResult::failure(
+                IssueError::LoanNotFound,
+                "No issue record found for this equipment."
+            );
+        }
+        if (!any_it->isActive()) {
+            return IssueResult::failure(
+                IssueError::LoanAlreadyClosed,
+                "Issue for this equipment is already closed."
+            );
+        }
+
+        any_it->close();
+        return IssueResult::success(any_it->getId(), "Equipment returned successfully.");
+    }
+
     const std::vector<EquipmentIssue>& getIssues() const {
         return issues_;
     }
