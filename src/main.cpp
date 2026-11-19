@@ -1,59 +1,36 @@
 #include <iostream>
-#include <vector>
-#include <algorithm>
-#include <numeric>
-#include <optional>
-#include "TimeSlot.h" // Підключаємо наш новий тип-значення
+#include <memory>
+#include "User.hpp"
+#include "equipment_record.hpp"
+#include "EquipmentIssue.hpp"
+#include "StandardIssuancePolicy.hpp"
+#include "ShortTermIssuancePolicy.hpp"
+#include "RestrictedEquipmentPolicy.hpp"
 
 int main() {
-    try {
-        std::cout << "=== LABORATORY WORK 4: Value Semantics & STL ==_\n\n";
+User student(1, "Polina Student", 3, UserRole::Student, 0);
+User staff(2, "Dr. Staff", 5, UserRole::Staff, 1);
 
-        // 1. Створюємо колекцію (std::vector) за допомогою нашого типу-значення TimeSlot
-        std::vector<TimeSlot> schedule;
-        schedule.emplace_back(9, 11);
-        schedule.emplace_back(12, 14);
-        schedule.emplace_back(15, 17);
-        schedule.emplace_back(10, 12); // Цей проміжок буде перетинатися з першим
+Equipment laptop(101, "Laptop Dell", AccessCategory::Laboratory, false, true);
+Equipment lab_scope(102, "Oscilloscope Pro", AccessCategory::HighSecurity, true, true);
 
-        std::cout << "Initial schedule slots count: " << schedule.size() << "\n";
+EquipmentIssue issue(1, student, laptop);
+issue.setPolicy(std::make_unique<StandardIssuancePolicy>());
 
-        // 2. Використання стандартного алгоритму STL: std::find_if для пошуку проміжку
-        // Шукаємо слот, у якого тривалість дорівнює 3 годинам
-        auto it = std::find_if(schedule.begin(), schedule.end(), [](const TimeSlot& slot) {
-            return slot.getDuration() == 3;
-        });
+auto r1 = issue.validateIssuance();
+std::cout << "Standard (student, laptop): allowed=" << r1.allowed
+          << ", days=" << r1.max_days << ", reason=" << r1.reason << "\n";
 
-        if (it != schedule.end()) {
-            std::cout << "Found slot with duration 3h: start at " << it->getStartHour() << ":00\n";
-        } else {
-            std::cout << "Slot with duration 3h not found.\n";
-        }
+issue.setPolicy(std::make_unique<ShortTermIssuancePolicy>());
+auto r2 = issue.validateIssuance();
+std::cout << "ShortTerm (student, laptop): allowed=" << r2.allowed
+          << ", days=" << r2.max_days << ", reason=" << r2.reason << "\n";
 
-        // 3. Використання стандартного алгоритму STL: сортування (std::sort)
-        // Завдяки оператору <=> у TimeSlot, сортування працює автоматично за часом початку
-        std::sort(schedule.begin(), schedule.end());
-        std::cout << "\nSchedule sorted chronologically.\n";
+EquipmentIssue staff_issue(2, staff, lab_scope);
+staff_issue.setPolicy(std::make_unique<RestrictedEquipmentPolicy>());
+auto r3 = staff_issue.validateIssuance();
+std::cout << "Restricted (staff, scope): allowed=" << r3.allowed
+          << ", days=" << r3.max_days << ", reason=" << r3.reason << "\n";
 
-        // 4. Демонстрація роботи з опціональним результатом (std::optional) замість -1 чи вказівників
-        auto findShortestSlot = [&schedule]() -> std::optional<TimeSlot> {
-            if (schedule.empty()) return std::nullopt;
-            
-            auto min_it = std::min_element(schedule.begin(), schedule.end(), [](const TimeSlot& a, const TimeSlot& b) {
-                return a.getDuration() < b.getDuration();
-            });
-            return *min_it;
-        };
-
-        std::optional<TimeSlot> shortest = findShortestSlot();
-        if (shortest) {
-            std::cout << "Shortest slot duration: " << shortest->getDuration() << " hour(s)\n";
-        }
-
-    } catch (const std::exception& e) {
-        std::cerr << "Error: " << e.what() << "\n";
-        return 1;
-    }
-
-    return 0;
+return 0;
 }
