@@ -1,3 +1,0 @@
-/mnt/d/2 курс/ооп/lab1/build/CMakeFiles/equipment_app.dir
-/mnt/d/2 курс/ооп/lab1/build/CMakeFiles/edit_cache.dir
-/mnt/d/2 курс/ооп/lab1/build/CMakeFiles/rebuild_cache.dir
