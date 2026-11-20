@@ -1,0 +1,3 @@
+/mnt/d/2 курс/ооп/lab7/build/CMakeFiles/lab07.dir
+/mnt/d/2 курс/ооп/lab7/build/CMakeFiles/edit_cache.dir
+/mnt/d/2 курс/ооп/lab7/build/CMakeFiles/rebuild_cache.dir
